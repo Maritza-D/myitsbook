@@ -613,3 +613,102 @@ begin
   alter publication supabase_realtime add table public.books;
 exception when duplicate_object then null;
 end $$;
+
+-- =====================================================
+-- TABLE TRANSACTIONS
+-- =====================================================
+
+create table if not exists public.transactions (
+  id uuid primary key default gen_random_uuid(),
+
+  book_id uuid not null
+    references public.books(id) on delete restrict,
+
+  seller_id uuid not null
+    references public.profiles(id) on delete restrict,
+
+  buyer_id uuid not null
+    references public.profiles(id) on delete restrict,
+
+  price integer not null check (price > 0),
+
+  status text not null default 'dalam_proses'
+    check (status in ('dalam_proses', 'selesai', 'dibatalkan')),
+
+  created_at timestamptz not null default now(),
+  completed_at timestamptz,
+
+  constraint transaction_no_self_purchase
+    check (seller_id <> buyer_id)
+);
+
+-- =====================================================
+-- TABLE DONATIONS
+-- =====================================================
+
+create table if not exists public.donations (
+  id uuid primary key default gen_random_uuid(),
+
+  book_id uuid not null
+    references public.books(id) on delete restrict,
+
+  donor_id uuid not null
+    references public.profiles(id) on delete restrict,
+
+  receiver_id uuid not null
+    references public.profiles(id) on delete restrict,
+
+  status text not null default 'dalam_proses'
+    check (status in ('dalam_proses', 'selesai', 'dibatalkan')),
+
+  created_at timestamptz not null default now(),
+  completed_at timestamptz,
+
+  constraint donation_no_self_claim
+    check (donor_id <> receiver_id)
+);
+
+-- =====================================================
+-- INDEXES
+-- =====================================================
+
+create index if not exists idx_transactions_buyer
+on public.transactions(buyer_id, created_at desc);
+
+create index if not exists idx_transactions_seller
+on public.transactions(seller_id, created_at desc);
+
+create index if not exists idx_donations_donor
+on public.donations(donor_id, created_at desc);
+
+create index if not exists idx_donations_receiver
+on public.donations(receiver_id, created_at desc);
+
+-- =====================================================
+-- ENABLE RLS
+-- =====================================================
+
+alter table public.transactions enable row level security;
+alter table public.donations enable row level security;
+
+-- Users can read their own transaction history
+
+create policy "Users can read own transactions"
+on public.transactions
+for select
+to authenticated
+using (
+  auth.uid() = buyer_id
+  or auth.uid() = seller_id
+);
+
+-- Users can read their own donation history
+
+create policy "Users can read own donations"
+on public.donations
+for select
+to authenticated
+using (
+  auth.uid() = donor_id
+  or auth.uid() = receiver_id
+);

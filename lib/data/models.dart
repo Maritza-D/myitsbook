@@ -144,6 +144,7 @@ class BookItem {
     required this.kontakWa,
     required this.lokasi,
     required this.createdAt,
+    this.stok = 1,
   });
 
   final String id;
@@ -160,6 +161,7 @@ class BookItem {
   final String kontakWa;
   final String lokasi;
   final DateTime createdAt;
+  final int stok;
 
   bool get isDonation => jenisListing == ListingType.donasi;
   bool get isAvailable => status == BookStatus.tersedia;
@@ -182,6 +184,7 @@ class BookItem {
       createdAt:
           DateTime.tryParse((map['created_at'] ?? '').toString()) ??
           DateTime.now(),
+      stok: ((map['stok'] ?? 1) as num).toInt(),
     );
   }
 
@@ -197,6 +200,7 @@ class BookItem {
     String? namaPenjual,
     String? kontakWa,
     String? lokasi,
+    int? stok,
   }) {
     return BookItem(
       id: id,
@@ -213,6 +217,7 @@ class BookItem {
       kontakWa: kontakWa ?? this.kontakWa,
       lokasi: lokasi ?? this.lokasi,
       createdAt: createdAt,
+      stok: stok ?? this.stok,
     );
   }
 }
@@ -317,4 +322,37 @@ class AppNotification {
           DateTime.now(),
     );
   }
+}
+
+enum HistoryType {
+  transaction,
+  donation,
+}
+
+class HistoryItem {
+  final String id;
+  final String bookId;
+  final String bookTitle;
+  final String category;
+  final String coverUrl;
+  final String otherUserName;
+  final String role;
+  final int price;
+  final HistoryType type;
+  final String status;
+  final DateTime createdAt;
+
+  const HistoryItem({
+    required this.id,
+    required this.bookId,
+    required this.bookTitle,
+    required this.category,
+    required this.coverUrl,
+    required this.otherUserName,
+    required this.role,
+    required this.price,
+    required this.type,
+    required this.status,
+    required this.createdAt,
+  });
 }

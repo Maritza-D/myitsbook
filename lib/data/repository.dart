@@ -98,6 +98,12 @@ abstract class AppRepository {
   Future<BookItem> updateBook(String bookId, BookPayload payload);
   Future<void> updateBookStatus(String bookId, BookStatus status);
   Future<void> deleteBook(String bookId);
+  Future<void> updateBookStock(String bookId, int stok);
+  Future<List<Map<String, dynamic>>> fetchSellerTransactions();
+  Future<void> updateSellerTransactionStatus(
+  String transactionId,
+  String status,
+  );
 
   Future<Set<String>> fetchWishlistIds();
   Future<List<BookItem>> fetchWishlistBooks();
@@ -112,6 +118,8 @@ abstract class AppRepository {
   Stream<List<AppNotification>> watchNotifications();
   Future<void> markNotificationRead(String notificationId);
   Future<void> markAllNotificationsRead();
+
+  Future<List<HistoryItem>> fetchHistory();
 
   void dispose();
 }
@@ -440,6 +448,59 @@ class SupabaseRepository implements AppRepository {
   }
 
   @override
+  Future<void> updateBookStock(String bookId, int stok) async {
+    if (stok < 0) {
+      throw Exception('Stok tidak boleh kurang dari 0.');
+    }
+
+    await _client
+        .from('books')
+        .update({'stok': stok})
+        .eq('id', bookId)
+        .eq('seller_id', _uid);
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchSellerTransactions() async {
+    final rows = await _client
+        .from('transactions')
+        .select('''
+          id,
+          book_id,
+          buyer_id,
+          price,
+          status,
+          created_at,
+          books (
+            judul,
+            foto_url
+          )
+        ''')
+        .eq('seller_id', _uid)
+        .order('created_at', ascending: false);
+
+    return rows.map((row) => Map<String, dynamic>.from(row)).toList();
+  }
+
+  @override
+  Future<void> updateSellerTransactionStatus(
+    String transactionId,
+    String status,
+  ) async {
+    if (!['selesai', 'dibatalkan'].contains(status)) {
+      throw Exception('Status pesanan tidak valid.');
+    }
+
+    await _client.rpc(
+      'seller_update_transaction_status',
+      params: {
+        'p_transaction_id': transactionId,
+        'p_status': status,
+      },
+    );
+  }
+
+  @override
   Future<void> deleteBook(String bookId) async {
     await _client.from('books').delete().eq('id', bookId).eq('seller_id', _uid);
   }
@@ -649,6 +710,117 @@ class SupabaseRepository implements AppRepository {
         .eq('user_id', _uid)
         .eq('is_read', false);
   }
+
+@override
+Future<List<HistoryItem>> fetchHistory() async {
+  final uid = _uid;
+
+  final transactions = await _client
+      .from('transactions')
+      .select('''
+        id,
+        book_id,
+        buyer_id,
+        seller_id,
+        price,
+        status,
+        created_at,
+        books (
+          judul,
+          kategori,
+          foto_url
+        ),
+        buyer:profiles!transactions_buyer_id_fkey (
+          nama
+        ),
+        seller:profiles!transactions_seller_id_fkey (
+          nama
+        )
+      ''')
+      .or('buyer_id.eq.$uid,seller_id.eq.$uid');
+
+  final donations = await _client
+      .from('donations')
+      .select('''
+        id,
+        book_id,
+        donor_id,
+        receiver_id,
+        status,
+        created_at,
+        books (
+          judul,
+          kategori,
+          foto_url
+        ),
+        donor:profiles!donations_donor_id_fkey (
+          nama
+        ),
+        receiver:profiles!donations_receiver_id_fkey (
+          nama
+        )
+      ''')
+      .or('donor_id.eq.$uid,receiver_id.eq.$uid');
+
+  final result = <HistoryItem>[];
+
+  for (final row in transactions) {
+    final book = row['books'] as Map<String, dynamic>;
+    final isBuyer = row['buyer_id'] == uid;
+
+    final otherUser = isBuyer
+        ? row['seller'] as Map<String, dynamic>
+        : row['buyer'] as Map<String, dynamic>;
+
+    result.add(
+      HistoryItem(
+        id: row['id'],
+        bookId: row['book_id'],
+        bookTitle: book['judul'] ?? '',
+        category: book['kategori'] ?? '',
+        coverUrl: book['foto_url'] ?? '',
+        otherUserName: otherUser['nama'] ?? '',
+        role: isBuyer ? 'Pembeli' : 'Penjual',
+        price: row['price'] ?? 0,
+        type: HistoryType.transaction,
+        status: row['status'],
+        createdAt: DateTime.parse(row['created_at']),
+      ),
+    );
+  }
+
+  for (final row in donations) {
+    final book = row['books'] as Map<String, dynamic>;
+    final isDonor = row['donor_id'] == uid;
+
+    final otherUser = isDonor
+        ? row['receiver'] as Map<String, dynamic>
+        : row['donor'] as Map<String, dynamic>;
+
+    result.add(
+      HistoryItem(
+        id: row['id'],
+        bookId: row['book_id'],
+        bookTitle: book['judul'] ?? '',
+        category: book['kategori'] ?? '',
+        coverUrl: book['foto_url'] ?? '',
+        otherUserName: otherUser['nama'] ?? '',
+        role: isDonor ? 'Donatur' : 'Penerima Donasi',
+        price: 0,
+        type: HistoryType.donation,
+        status: row['status'],
+        createdAt: DateTime.parse(row['created_at']),
+      ),
+    );
+  }
+
+  result.sort(
+    (a, b) => b.createdAt.compareTo(a.createdAt),
+  );
+
+  return result;
+}
+
 
   @override
   void dispose() {}
@@ -1085,6 +1257,32 @@ class DemoRepository implements AppRepository {
   }
 
   @override
+  Future<void> updateBookStock(String bookId, int stok) async {
+    if (stok < 0) {
+      throw Exception('Stok tidak boleh kurang dari 0.');
+    }
+
+    final idx = _books.indexWhere((b) => b.id == bookId);
+    if (idx == -1) throw Exception('Buku tidak ditemukan.');
+
+    _books[idx] = _books[idx].copyWith(stok: stok);
+    _emit();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchSellerTransactions() async {
+    return [];
+  }
+
+  @override
+  Future<void> updateSellerTransactionStatus(
+    String transactionId,
+    String status,
+  ) async {
+    // Belum ada data transaksi pada DemoRepository.
+  }
+
+  @override
   Future<void> deleteBook(String bookId) async {
     _books.removeWhere((b) => b.id == bookId);
     _wishlist.remove(bookId);
@@ -1284,6 +1482,11 @@ class DemoRepository implements AppRepository {
   }
 
   @override
+  Future<List<HistoryItem>> fetchHistory() async {
+    return [];
+  }
+
+  @override
   void dispose() {
     _changes.close();
   }
@@ -1304,3 +1507,5 @@ class _DemoConv {
   final String bookId;
   final DateTime updatedAt;
 }
+
+

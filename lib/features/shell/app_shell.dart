@@ -11,6 +11,7 @@ import 'package:myitsbook/features/catalog/catalog_screen.dart';
 import 'package:myitsbook/features/chat/conversations_screen.dart';
 import 'package:myitsbook/features/home/home_screen.dart';
 import 'package:myitsbook/features/profile/profile_screen.dart';
+import 'package:myitsbook/features/history/riwayat_screen.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({
@@ -184,69 +185,80 @@ class _AppShellState extends State<AppShell> {
   }
 
   Widget _buildActiveScreen() {
-    switch (_index) {
-      case 0:
-        return KeyedSubtree(
-          key: const ValueKey('tab-home'),
-          child: HomeScreen(
-            repository: widget.repository,
-            profile: widget.profile,
-            refreshTick: _refreshTick,
-            wishlistIds: _wishlistIds,
-            unreadNotifCount: _unreadNotifCount,
-            onToggleWishlist: _toggleWishlist,
-            onSearchSubmit: (q) => _openCatalog(query: q),
-            onCategoryTap: (cat) => _openCatalog(category: cat),
-            onFilterApplied: (f) => _openCatalog(filter: f),
-            onDonateNowTap: () => _openBookForm(ListingType.donasi),
-            onDataMutated: () => setState(() => _refreshTick++),
-          ),
-        );
-      case 1:
-        return KeyedSubtree(
-          key: const ValueKey('tab-catalog'),
-          child: CatalogScreen(
-            repository: widget.repository,
-            profile: widget.profile,
-            refreshTick: _refreshTick,
-            initialQuery: _catalogInitialQuery,
-            initialCategory: _catalogInitialCategory,
-            initialFilter: _catalogInitialFilter,
-            wishlistIds: _wishlistIds,
-            onToggleWishlist: _toggleWishlist,
-            onDataMutated: () => setState(() => _refreshTick++),
-          ),
-        );
-      case 2:
-        return KeyedSubtree(
-          key: const ValueKey('tab-chat'),
-          child: ConversationsScreen(
-            repository: widget.repository,
-            profile: widget.profile,
-            onDataMutated: () => setState(() => _refreshTick++),
-          ),
-        );
-      default:
-        return KeyedSubtree(
-          key: const ValueKey('tab-profile'),
-          child: ProfileScreen(
-            repository: widget.repository,
-            profile: widget.profile,
-            wishlistIds: _wishlistIds,
-            onToggleWishlist: _toggleWishlist,
-            onProfileUpdated: widget.onProfileUpdated,
-            onLogout: widget.onLogout,
-            themeMode: widget.themeMode,
-            onThemeModeChanged: widget.onThemeModeChanged,
-            onDataMutated: () => setState(() => _refreshTick++),
-          ),
-        );
-    }
+  switch (_index) {
+    case 0:
+      return KeyedSubtree(
+        key: const ValueKey('tab-home'),
+        child: HomeScreen(
+          repository: widget.repository,
+          profile: widget.profile,
+          refreshTick: _refreshTick,
+          wishlistIds: _wishlistIds,
+          unreadNotifCount: _unreadNotifCount,
+          onToggleWishlist: _toggleWishlist,
+          onSearchSubmit: (q) => _openCatalog(query: q),
+          onCategoryTap: (cat) => _openCatalog(category: cat),
+          onFilterApplied: (f) => _openCatalog(filter: f),
+          onDonateNowTap: () => _openBookForm(ListingType.donasi),
+          onDataMutated: () => setState(() => _refreshTick++),
+        ),
+      );
+
+    case 1:
+      return KeyedSubtree(
+        key: const ValueKey('tab-catalog'),
+        child: CatalogScreen(
+          repository: widget.repository,
+          profile: widget.profile,
+          refreshTick: _refreshTick,
+          initialQuery: _catalogInitialQuery,
+          initialCategory: _catalogInitialCategory,
+          initialFilter: _catalogInitialFilter,
+          wishlistIds: _wishlistIds,
+          onToggleWishlist: _toggleWishlist,
+          onDataMutated: () => setState(() => _refreshTick++),
+        ),
+      );
+
+    case 2:
+      return KeyedSubtree(
+        key: const ValueKey('tab-chat'),
+        child: ConversationsScreen(
+          repository: widget.repository,
+          profile: widget.profile,
+          onDataMutated: () => setState(() => _refreshTick++),
+        ),
+      );
+
+    case 3:
+      return KeyedSubtree(
+        key: const ValueKey('tab-history'),
+        child: RiwayatScreen(
+          repository: widget.repository,
+        ),
+      );
+
+    default:
+      return KeyedSubtree(
+        key: const ValueKey('tab-profile'),
+        child: ProfileScreen(
+          repository: widget.repository,
+          profile: widget.profile,
+          wishlistIds: _wishlistIds,
+          onToggleWishlist: _toggleWishlist,
+          onProfileUpdated: widget.onProfileUpdated,
+          onLogout: widget.onLogout,
+          themeMode: widget.themeMode,
+          onThemeModeChanged: widget.onThemeModeChanged,
+          onDataMutated: () => setState(() => _refreshTick++),
+        ),
+      );
   }
+}
 
   int get _navBarSelectedIndex {
     if (_index <= 1) return _index;
-    return _index + 1;
+      return _index + 1;
   }
 
   void _onNavSelected(int navPos) {

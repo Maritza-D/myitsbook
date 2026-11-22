@@ -7,6 +7,8 @@ import 'package:myitsbook/data/models.dart';
 import 'package:myitsbook/data/repository.dart';
 import 'package:myitsbook/features/profile/my_books_screen.dart';
 import 'package:myitsbook/features/profile/wishlist_screen.dart';
+import 'package:myitsbook/features/seller/stok_buku_screen.dart';
+import 'package:myitsbook/features/seller/kelola_pesanan_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
@@ -593,42 +595,133 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
+                const SizedBox(height: 14),
+
+// PUSAT PENJUAL
+Card(
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        child: Row(
+          children: [
+            Icon(
+              Icons.storefront_rounded,
+              color: semantic.navy,
+            ),
+            const SizedBox(width: 10),
+            Text(
+              'Pusat Penjual',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ],
+        ),
+      ),
+
+      ListTile(
+        leading: _ProfileIconBox(
+          icon: Icons.menu_book_rounded,
+          semantic: semantic,
+        ),
+        title: Text(
+          'Daftar Buku Saya',
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        subtitle: Text(
+          'Tambah, edit, dan hapus buku',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        trailing: Icon(
+          Icons.chevron_right_rounded,
+          color: semantic.textMuted,
+        ),
+        onTap: () async {
+          await Navigator.of(context).push<void>(
+            MaterialPageRoute(
+              builder: (_) => MyBooksScreen(
+                repository: widget.repository,
+                profile: profile,
+                wishlistIds: widget.wishlistIds,
+                onToggleWishlist: widget.onToggleWishlist,
+                onDataMutated: widget.onDataMutated,
+              ),
+            ),
+          );
+          _loadStats();
+        },
+      ),
+
+      Divider(height: 1, indent: 70, color: semantic.border),
+
+      ListTile(
+        leading: _ProfileIconBox(
+          icon: Icons.inventory_2_outlined,
+          semantic: semantic,
+        ),
+        title: Text(
+          'Kelola Stok',
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        subtitle: Text(
+          'Atur jumlah persediaan buku',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        trailing: Icon(
+          Icons.chevron_right_rounded,
+          color: semantic.textMuted,
+        ),
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => StokBukuScreen(
+                repository: widget.repository,
+                onDataMutated: widget.onDataMutated,
+              ),
+            ),
+          );
+        },
+      ),
+
+      Divider(height: 1, indent: 70, color: semantic.border),
+
+      ListTile(
+        leading: _ProfileIconBox(
+          icon: Icons.receipt_long_outlined,
+          semantic: semantic,
+        ),
+        title: Text(
+          'Pesanan Masuk',
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        subtitle: Text(
+          'Lihat dan kelola pesanan pembeli',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        trailing: Icon(
+          Icons.chevron_right_rounded,
+          color: semantic.textMuted,
+        ),
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => KelolaPesananScreen(
+                repository: widget.repository,
+              ),
+            ),
+          );
+        },
+      ),
+    ],
+  ),
+),
+
+                const SizedBox(height: 14),
+
+                // PENGATURAN AKUN
                 Card(
                   child: Column(
                     children: [
-                      ListTile(
-                        leading: _ProfileIconBox(
-                          icon: Icons.schedule_rounded,
-                          semantic: semantic,
-                        ),
-                        title: Text(
-                          'Daftar Buku Saya',
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                        subtitle: Text(
-                          'Kelola daftar buku terjual, donasi, dan status',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        trailing: Icon(
-                          Icons.chevron_right_rounded,
-                          color: semantic.textMuted,
-                        ),
-                        onTap: () async {
-                          await Navigator.of(context).push<void>(
-                            MaterialPageRoute(
-                              builder: (_) => MyBooksScreen(
-                                repository: widget.repository,
-                                profile: profile,
-                                wishlistIds: widget.wishlistIds,
-                                onToggleWishlist: widget.onToggleWishlist,
-                                onDataMutated: widget.onDataMutated,
-                              ),
-                            ),
-                          );
-                          _loadStats();
-                        },
-                      ),
-                      Divider(height: 1, indent: 70, color: semantic.border),
                       ListTile(
                         leading: _ProfileIconBox(
                           icon: Icons.favorite_border_rounded,
@@ -658,7 +751,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                       ),
+
                       Divider(height: 1, indent: 70, color: semantic.border),
+
                       ListTile(
                         leading: _ProfileIconBox(
                           icon: Icons.person_outline_rounded,
@@ -678,7 +773,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         onTap: _editProfileSheet,
                       ),
+
                       Divider(height: 1, indent: 70, color: semantic.border),
+
                       ListTile(
                         leading: _ProfileIconBox(
                           icon: Icons.palette_outlined,
