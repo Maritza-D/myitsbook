@@ -161,8 +161,17 @@ class BookItem {
   final String lokasi;
   final DateTime createdAt;
 
+
   bool get isDonation => jenisListing == ListingType.donasi;
   bool get isAvailable => status == BookStatus.tersedia;
+
+  String get statusLabel {
+    if (isDonation &&
+        (status == BookStatus.terjual || status == BookStatus.selesai)) {
+      return 'Terdonasikan';
+    }
+    return status.label;
+  }
 
   factory BookItem.fromMap(Map<String, dynamic> map) {
     return BookItem(

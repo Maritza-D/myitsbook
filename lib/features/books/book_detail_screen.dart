@@ -146,6 +146,46 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
     }
   }
 
+  Future<void> _deleteBook(BookItem book) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hapus Buku?'),
+        content: Text(
+          'Buku "${book.judul}" akan dihapus permanen dari katalog.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Batal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await widget.repository.deleteBook(book.id);
+      widget.onBookChanged();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Buku berhasil dihapus.')),
+      );
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(mapAppError(e))),
+      );
+    }
+  }
+
   Future<void> _showContactSheet(BookItem book) async {
     await showAppBottomSheet<void>(
       context: context,
@@ -287,21 +327,29 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                                 onTap: () => Navigator.of(context).pop(),
                               ),
                               const Spacer(),
-                              _FrostedCircleButton(
-                                tooltip: _saved
-                                    ? 'Hapus dari Wishlist'
-                                    : 'Simpan ke Wishlist',
-                                icon: _saved
-                                    ? Icons.favorite_rounded
-                                    : Icons.favorite_border_rounded,
-                                iconColor: _saved ? scheme.error : null,
-                                scalePop: _saved,
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  setState(() => _saved = !_saved);
-                                  widget.onToggleWishlist();
-                                },
-                              ),
+                              if (isOwner)
+                                _FrostedCircleButton(
+                                  tooltip: 'Hapus Buku',
+                                  icon: Icons.delete_outline_rounded,
+                                  iconColor: scheme.error,
+                                  onTap: () => _deleteBook(book),
+                                )
+                              else
+                                _FrostedCircleButton(
+                                  tooltip: _saved
+                                      ? 'Hapus dari Wishlist'
+                                      : 'Simpan ke Wishlist',
+                                  icon: _saved
+                                      ? Icons.favorite_rounded
+                                      : Icons.favorite_border_rounded,
+                                  iconColor: _saved ? scheme.error : null,
+                                  scalePop: _saved,
+                                  onTap: () {
+                                    HapticFeedback.lightImpact();
+                                    setState(() => _saved = !_saved);
+                                    widget.onToggleWishlist();
+                                  },
+                                ),
                             ],
                           ),
                         ),
@@ -375,7 +423,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    book.status.label,
+                                    book.statusLabel,
                                     style: TextStyle(
                                       fontFamily: AppTheme.bodyFont,
                                       fontSize: 11.5,
@@ -474,7 +522,9 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                         if (!isOwner && book.isAvailable) ...[
                           const SizedBox(height: 22),
                           Text(
-                            'Pertanyaan Cepat',
+                            book.isDonation
+                                ? 'Ajukan Klaim Donasi'
+                                : 'Pertanyaan Cepat Transaksi',
                             style: Theme.of(context).textTheme.titleSmall
                                 ?.copyWith(color: semantic.textMuted),
                           ),
@@ -483,16 +533,24 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                             spacing: 8,
                             runSpacing: 8,
                             children: [
-                              for (final prompt in [
-                                'Halo, apakah buku ini masih tersedia?',
-                                'Apakah tersedia serah terima di area kampus ITS?',
-                                'Apakah boleh melihat foto kondisi halaman dalam?',
-                              ])
+                              for (final prompt in (book.isDonation
+                                  ? const [
+                                      'Halo, apakah buku donasi ini masih tersedia?',
+                                      'Saya mahasiswa ITS dan membutuhkan buku ini untuk kuliah, boleh saya klaim?',
+                                      'Kapan dan di mana saya bisa mengambil bukunya di area kampus?',
+                                    ]
+                                  : const [
+                                      'Halo, apakah buku ini masih tersedia untuk dibeli?',
+                                      'Apakah harga masih bisa nego tipis?',
+                                      'Bisa serah terima (COD) di area kampus ITS hari ini?',
+                                    ]))
                                 ActionChip(
                                   avatar: Icon(
                                     Icons.chat_bubble_outline_rounded,
                                     size: 14,
-                                    color: semantic.silverBlue,
+                                    color: book.isDonation
+                                        ? semantic.donation
+                                        : semantic.silverBlue,
                                   ),
                                   label: Text(
                                     prompt,
@@ -669,6 +727,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
   }
 
   Widget _buildBottomActions(BuildContext context, BookItem book) {
+    final semantic = AppSemanticColors.of(context);
     final isOwner = book.sellerId == widget.profile.id;
     if (isOwner) {
       return Row(
@@ -712,7 +771,11 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
         width: double.infinity,
         child: FilledButton(
           onPressed: null,
-          child: Text('Tidak Tersedia (${book.status.label})'),
+          child: Text(
+            book.status == BookStatus.dalamProses
+                ? 'Sedang Dalam Proses Transaksi'
+                : 'Tidak Tersedia (${book.statusLabel})',
+          ),
         ),
       );
     }
@@ -736,9 +799,20 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
         Expanded(
           child: FilledButton.icon(
             onPressed: _openingChat ? null : () => _openChat(),
-            icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+            style: book.isDonation
+                ? FilledButton.styleFrom(
+                    backgroundColor: semantic.donation,
+                    foregroundColor: semantic.onDonation,
+                  )
+                : null,
+            icon: Icon(
+              book.isDonation
+                  ? Icons.volunteer_activism_outlined
+                  : Icons.shopping_bag_outlined,
+              size: 18,
+            ),
             label: Text(
-              book.isDonation ? 'Hubungi Donatur' : 'Hubungi Penjual',
+              book.isDonation ? 'Ajukan Donasi' : 'Beli / Hubungi Penjual',
             ),
           ),
         ),
