@@ -7,6 +7,7 @@ import 'package:myitsbook/data/models.dart';
 import 'package:myitsbook/data/repository.dart';
 import 'package:myitsbook/features/profile/my_books_screen.dart';
 import 'package:myitsbook/features/profile/wishlist_screen.dart';
+import 'package:myitsbook/features/help/help_center_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
@@ -51,10 +52,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final myBooks = await widget.repository.fetchMyBooks();
       if (!mounted) return;
       setState(() {
-        _jualCount =
-            myBooks.where((b) => b.jenisListing == ListingType.jual).length;
-        _donasiCount =
-            myBooks.where((b) => b.jenisListing == ListingType.donasi).length;
+        _jualCount = myBooks
+            .where((b) => b.jenisListing == ListingType.jual)
+            .length;
+        _donasiCount = myBooks
+            .where((b) => b.jenisListing == ListingType.donasi)
+            .length;
       });
     } catch (_) {}
   }
@@ -233,8 +236,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final ok = await showConfirmBottomSheet(
       context: context,
       title: 'Keluar dari Akun?',
-      message:
-          'Anda perlu masuk kembali menggunakan akun ITS untuk mengakses katalog dan pesan.',
+      message: 'Anda perlu masuk kembali menggunakan akun ITS untuk mengakses katalog dan pesan.',
       confirmLabel: 'Keluar',
       icon: Icons.logout_rounded,
       destructive: true,
@@ -272,7 +274,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [semantic.navyDeep, semantic.navy, semantic.navyMid],
+                    colors: [
+                      semantic.navyDeep,
+                      semantic.navy,
+                      semantic.navyMid,
+                    ],
                     stops: const [0.0, 0.55, 1.0],
                   ),
                   borderRadius: const BorderRadius.vertical(
@@ -323,179 +329,187 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: SafeArea(
                         bottom: false,
                         child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            'Profil Saya',
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(color: Colors.white),
-                          ),
-                          const Spacer(),
-                          IconButton(
-                            tooltip: 'Tema Tampilan',
-                            onPressed: _showThemeSheet,
-                            style: IconButton.styleFrom(
-                              backgroundColor: Colors.white.withValues(
-                                alpha: 0.12,
-                              ),
-                              minimumSize: const Size(44, 44),
-                            ),
-                            icon: const Icon(
-                              Icons.settings_outlined,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 18),
-                      Row(
-                        children: [
-                          Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              Container(
-                                width: 74,
-                                height: 74,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.14),
-                                  borderRadius: BorderRadius.circular(22),
-                                  border: Border.all(
-                                    color: const Color(0xFF9AC3EE),
-                                    width: 2,
-                                  ),
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  'Profil Saya',
+                                  style: Theme.of(context).textTheme.titleLarge
+                                      ?.copyWith(color: Colors.white),
                                 ),
-                                alignment: Alignment.center,
-                                child: Text(
-                                  profile.nama.isNotEmpty
-                                      ? profile.nama[0].toUpperCase()
-                                      : 'M',
-                                  style: const TextStyle(
-                                    fontFamily: AppTheme.displayFont,
-                                    fontSize: 30,
-                                    fontWeight: FontWeight.w700,
+                                const Spacer(),
+                                IconButton(
+                                  tooltip: 'Tema Tampilan',
+                                  onPressed: _showThemeSheet,
+                                  style: IconButton.styleFrom(
+                                    backgroundColor: Colors.white.withValues(
+                                      alpha: 0.12,
+                                    ),
+                                    minimumSize: const Size(44, 44),
+                                  ),
+                                  icon: const Icon(
+                                    Icons.settings_outlined,
                                     color: Colors.white,
                                   ),
                                 ),
-                              ),
-                              Positioned(
-                                right: -4,
-                                bottom: -4,
-                                child: GestureDetector(
-                                  onTap: _editProfileSheet,
-                                  child: Container(
-                                    width: 28,
-                                    height: 28,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(9),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withValues(
-                                            alpha: 0.18,
-                                          ),
-                                          blurRadius: 6,
-                                        ),
-                                      ],
-                                    ),
-                                    child: const Icon(
-                                      Icons.edit_outlined,
-                                      size: 15,
-                                      color: Color(0xFF0B2245),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              ],
+                            ),
+                            const SizedBox(height: 18),
+                            Row(
                               children: [
-                                Text(
-                                  profile.nama,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headlineSmall
-                                      ?.copyWith(
-                                        color: Colors.white,
-                                        fontSize: 20,
-                                      ),
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
+                                Stack(
+                                  clipBehavior: Clip.none,
                                   children: [
-                                    const Icon(
-                                      Icons.school_outlined,
-                                      size: 14,
-                                      color: Color(0xFFBFD7F2),
-                                    ),
-                                    const SizedBox(width: 5),
-                                    Expanded(
-                                      child: Text(
-                                        '${profile.jurusan} · NRP ${profile.nrp}',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontSize: 12.5,
-                                          color: Color(0xFFD2E4F8),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 6),
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.star_rounded,
-                                      size: 16,
-                                      color: Color(0xFFFACC15),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      profile.ratingRata2.toStringAsFixed(1),
-                                      style: const TextStyle(
-                                        fontFamily: AppTheme.displayFont,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w700,
-                                        color: Color(0xFFFACC15),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 2,
-                                      ),
+                                      width: 74,
+                                      height: 74,
                                       decoration: BoxDecoration(
                                         color: Colors.white.withValues(
                                           alpha: 0.14,
                                         ),
-                                        borderRadius: BorderRadius.circular(10),
+                                        borderRadius: BorderRadius.circular(22),
+                                        border: Border.all(
+                                          color: const Color(0xFF9AC3EE),
+                                          width: 2,
+                                        ),
                                       ),
+                                      alignment: Alignment.center,
                                       child: Text(
-                                        profile.statusVerifikasi,
+                                        profile.nama.isNotEmpty
+                                            ? profile.nama[0].toUpperCase()
+                                            : 'M',
                                         style: const TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                          color: Color(0xFFE8F1FB),
+                                          fontFamily: AppTheme.displayFont,
+                                          fontSize: 30,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      right: -4,
+                                      bottom: -4,
+                                      child: GestureDetector(
+                                        onTap: _editProfileSheet,
+                                        child: Container(
+                                          width: 28,
+                                          height: 28,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(
+                                              9,
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black.withValues(
+                                                  alpha: 0.18,
+                                                ),
+                                                blurRadius: 6,
+                                              ),
+                                            ],
+                                          ),
+                                          child: const Icon(
+                                            Icons.edit_outlined,
+                                            size: 15,
+                                            color: Color(0xFF0B2245),
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ],
                                 ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        profile.nama,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .headlineSmall
+                                            ?.copyWith(
+                                              color: Colors.white,
+                                              fontSize: 20,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.school_outlined,
+                                            size: 14,
+                                            color: Color(0xFFBFD7F2),
+                                          ),
+                                          const SizedBox(width: 5),
+                                          Expanded(
+                                            child: Text(
+                                              '${profile.jurusan} · NRP ${profile.nrp}',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                fontSize: 12.5,
+                                                color: Color(0xFFD2E4F8),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.star_rounded,
+                                            size: 16,
+                                            color: Color(0xFFFACC15),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            profile.ratingRata2.toStringAsFixed(
+                                              1,
+                                            ),
+                                            style: const TextStyle(
+                                              fontFamily: AppTheme.displayFont,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w700,
+                                              color: Color(0xFFFACC15),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 2,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withValues(
+                                                alpha: 0.14,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                            child: Text(
+                                              profile.statusVerifikasi,
+                                              style: const TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                color: Color(0xFFE8F1FB),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ],
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
-                ),
                     ),
                   ],
                 ),
@@ -523,24 +537,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   child: Row(
                     children: [
-                      _ProfileStatColumn(
-                        value: '$_jualCount',
-                        label: 'Dijual',
-                      ),
-                      Container(
-                        width: 1,
-                        height: 34,
-                        color: semantic.border,
-                      ),
+                      _ProfileStatColumn(value: '$_jualCount', label: 'Dijual'),
+                      Container(width: 1, height: 34, color: semantic.border),
                       _ProfileStatColumn(
                         value: '$_donasiCount',
                         label: 'Donasi',
                       ),
-                      Container(
-                        width: 1,
-                        height: 34,
-                        color: semantic.border,
-                      ),
+                      Container(width: 1, height: 34, color: semantic.border),
                       _ProfileStatColumn(
                         value: '${widget.wishlistIds.length}',
                         label: 'Wishlist',
@@ -698,6 +701,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         onTap: _showThemeSheet,
                       ),
+                      Divider(
+                        height: 1,
+                        indent: 70,
+                        color: semantic.border,
+                      ),
+                      ListTile(
+                        leading: _ProfileIconBox(
+                          icon: Icons.help_outline_rounded,
+                          semantic: semantic,
+                        ),
+                        title: Text(
+                          'Pusat Bantuan',
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        subtitle: Text(
+                          'Panduan penggunaan dan FAQ MyITSBook',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        trailing: Icon(
+                          Icons.chevron_right_rounded,
+                          color: semantic.textMuted,
+                        ),
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const HelpCenterScreen(),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -718,9 +749,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(
                   'MyITSBook · Versi 1.0.0',
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: semantic.textMuted,
-                  ),
+                  style: Theme.of(context).textTheme.labelSmall
+                      ?.copyWith(color: semantic.textMuted),
                 ),
                 const SizedBox(height: 24),
               ],
@@ -758,9 +788,8 @@ class _ProfileStatColumn extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             label,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: semantic.textMuted,
-            ),
+            style: Theme.of(context).textTheme.labelSmall
+                ?.copyWith(color: semantic.textMuted),
           ),
         ],
       ),

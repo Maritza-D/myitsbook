@@ -7,6 +7,7 @@ import 'package:myitsbook/core/widgets/app_bottom_sheet.dart';
 import 'package:myitsbook/core/widgets/app_logo.dart';
 import 'package:myitsbook/data/models.dart';
 import 'package:myitsbook/data/repository.dart';
+import 'package:myitsbook/features/help/help_center_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({
@@ -74,9 +75,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       widget.onRegistered(verified);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(mapAppError(e))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(mapAppError(e))));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -103,7 +103,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('')),
+      appBar: AppBar(
+        title: const Text(''),
+        actions: [
+          IconButton(
+            tooltip: 'Pusat Bantuan',
+            icon: const Icon(Icons.help_outline_rounded),
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const HelpCenterScreen())),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(22, 4, 22, 28),
@@ -124,9 +135,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Text(
                     'Lengkapi data identitas mahasiswa ITS untuk membuat akun MyITSBook.',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: semantic.textMuted,
-                    ),
+                    style: Theme.of(context).textTheme.bodyMedium
+                        ?.copyWith(color: semantic.textMuted),
                   ),
                   const SizedBox(height: 22),
                   Container(
@@ -247,8 +257,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             decoration: const InputDecoration(
                               hintText: 'nama@gmail.com',
                               prefixIcon: Icon(Icons.email_outlined),
-                              helperText:
-                                  'Kode/tautan verifikasi akan dikirim ke email ini.',
+                              helperText: 'Kode/tautan verifikasi akan dikirim ke email ini.',
                             ),
                           ),
                           const SizedBox(height: 14),
@@ -417,8 +426,7 @@ class _EmailVerificationSheetState extends State<_EmailVerificationSheet> {
       await widget.repository.resendSignupVerification(widget.email);
       if (!mounted) return;
       setState(
-        () => _infoText =
-            'Email verifikasi baru telah dikirim. Periksa kotak masuk atau folder spam.',
+        () => _infoText = 'Email verifikasi baru telah dikirim. Periksa kotak masuk atau folder spam.',
       );
     } catch (e) {
       if (!mounted) return;
@@ -469,9 +477,8 @@ class _EmailVerificationSheetState extends State<_EmailVerificationSheet> {
                       widget.email,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: semantic.silverBlue,
-                      ),
+                      style: Theme.of(context).textTheme.labelMedium
+                          ?.copyWith(color: semantic.silverBlue),
                     ),
                   ],
                 ),
@@ -481,10 +488,8 @@ class _EmailVerificationSheetState extends State<_EmailVerificationSheet> {
           const SizedBox(height: 12),
           Text(
             'Kami telah mengirimkan kode dan tautan konfirmasi ke Gmail Anda. Masukkan kode verifikasi di bawah ini, atau klik tautan di email lalu masuk kembali.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: semantic.textMuted,
-              height: 1.45,
-            ),
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(color: semantic.textMuted, height: 1.45),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -509,18 +514,16 @@ class _EmailVerificationSheetState extends State<_EmailVerificationSheet> {
             const SizedBox(height: 8),
             Text(
               _errorText!,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: scheme.error,
-              ),
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(color: scheme.error),
             ),
           ],
           if (_infoText != null) ...[
             const SizedBox(height: 8),
             Text(
               _infoText!,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: semantic.donation,
-              ),
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(color: semantic.donation),
             ),
           ],
           const SizedBox(height: 16),
@@ -539,8 +542,9 @@ class _EmailVerificationSheetState extends State<_EmailVerificationSheet> {
           ),
           const SizedBox(height: 10),
           OutlinedButton.icon(
-            onPressed:
-                (_verifying || _checkingLink) ? null : _signInAfterLinkClicked,
+            onPressed: (_verifying || _checkingLink)
+                ? null
+                : _signInAfterLinkClicked,
             icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
             label: Text(
               _checkingLink
@@ -551,10 +555,13 @@ class _EmailVerificationSheetState extends State<_EmailVerificationSheet> {
           const SizedBox(height: 6),
           Center(
             child: TextButton(
-              onPressed:
-                  (_verifying || _checkingLink || _resending) ? null : _resend,
+              onPressed: (_verifying || _checkingLink || _resending)
+                  ? null
+                  : _resend,
               child: Text(
-                _resending ? 'Mengirim ulang...' : 'Kirim Ulang Email Verifikasi',
+                _resending
+                    ? 'Mengirim ulang...'
+                    : 'Kirim Ulang Email Verifikasi',
               ),
             ),
           ),

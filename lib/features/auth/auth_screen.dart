@@ -7,6 +7,7 @@ import 'package:myitsbook/data/models.dart';
 import 'package:myitsbook/data/repository.dart';
 import 'package:myitsbook/features/auth/forgot_password_screen.dart';
 import 'package:myitsbook/features/auth/register_screen.dart';
+import 'package:myitsbook/features/help/help_center_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({
@@ -48,9 +49,8 @@ class _AuthScreenState extends State<AuthScreen> {
       widget.onAuthenticated(profile);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(mapAppError(e))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(mapAppError(e))));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -69,7 +69,10 @@ class _AuthScreenState extends State<AuthScreen> {
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 24,
+                ),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 430),
                   child: Column(
@@ -86,9 +89,8 @@ class _AuthScreenState extends State<AuthScreen> {
                       Text(
                         'Masuk untuk mencari, menjual, dan mendonasikan buku kuliah.',
                         textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: semantic.textMuted,
-                        ),
+                        style: Theme.of(context).textTheme.bodyMedium
+                            ?.copyWith(color: semantic.textMuted),
                       ),
                       const SizedBox(height: 24),
                       Container(
@@ -145,7 +147,8 @@ class _AuthScreenState extends State<AuthScreen> {
                                   prefixIcon: const Icon(Icons.lock_outline),
                                   suffixIcon: IconButton(
                                     onPressed: () => setState(
-                                      () => _obscurePassword = !_obscurePassword,
+                                      () =>
+                                          _obscurePassword = !_obscurePassword,
                                     ),
                                     tooltip: _obscurePassword
                                         ? 'Tampilkan kata sandi'
@@ -165,9 +168,10 @@ class _AuthScreenState extends State<AuthScreen> {
                                       ? null
                                       : () => Navigator.of(context).push(
                                           MaterialPageRoute(
-                                            builder: (_) => ForgotPasswordScreen(
-                                              repository: widget.repository,
-                                            ),
+                                            builder: (_) =>
+                                                ForgotPasswordScreen(
+                                                  repository: widget.repository,
+                                                ),
                                           ),
                                         ),
                                   style: TextButton.styleFrom(
@@ -200,9 +204,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                 children: [
                                   Text(
                                     'Belum memiliki akun? ',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
+                                    style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(color: semantic.textMuted),
                                   ),
                                   TextButton(
@@ -226,6 +228,19 @@ class _AuthScreenState extends State<AuthScreen> {
                                     child: const Text('Daftar Sekarang'),
                                   ),
                                 ],
+                              ),
+                              const SizedBox(height: 12),
+                              TextButton.icon(
+                                onPressed: () => Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const HelpCenterScreen(),
+                                  ),
+                                ),
+                                icon: const Icon(
+                                  Icons.help_outline_rounded,
+                                  size: 18,
+                                ),
+                                label: const Text('Pusat Bantuan'),
                               ),
                             ],
                           ),
