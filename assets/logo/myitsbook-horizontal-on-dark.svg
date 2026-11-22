@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 256" width="840" height="256" role="img" aria-labelledby="title">
+  <title id="title">MyITSBook Horizontal Lockup on Dark</title>
+  <g id="symbol" transform="translate(8, 0)">
+    <rect x="30" y="192" width="196" height="24" rx="4" fill="#FFFFFF"/>
+    <rect x="44" y="100" width="34" height="78" rx="4" fill="#FFFFFF"/>
+    <circle cx="61" cy="62" r="17" fill="#8AB8E8"/>
+    <rect x="94" y="40" width="34" height="138" rx="4" fill="#FFFFFF"/>
+    <path fill="#FFFFFF" d="M180.0 174.1 L147.3 52.5 A4 4 0 0 1 150.2 47.6 L175.2 40.8 A4 4 0 0 1 180.1 43.7 L212.8 165.3 A4 4 0 0 1 209.9 170.2 L184.9 177.0 A4 4 0 0 1 180.0 174.1 Z"/>
+  </g>
+  <g id="wordmark" transform="translate(268, -6) scale(1.12)">
+    <path fill="#FFFFFF" d="M0 160 V80 H17 L33 128 L49 80 H66 V160 H53 V106 L40 145 H26 L13 106 V160 Z M75.5 102 H88.5 L97 134 L105.5 102 H118.5 L97 182 H84.5 L90.2 161 Z M128 80 H141 V160 H128 Z M149 80 H200 V92 H181 V160 H168 V92 H149 Z M253 97 H240 C240 92 236 89 231 89 C224 89 221 93 221 99 C221 106 226 109 235 112 C247 116 255 123 255 137 C255 153 244 162 231 162 C216 162 207 152 207 139 H220 C220 146 224 151 231 151 C238 151 242 146 242 138 C242 130 237 127 228 124 C216 120 208 113 208 100 C208 86 218 78 231 78 C245 78 253 86 253 97 Z"/>
+    <path fill="#8AB8E8" fill-rule="evenodd" d="M265 80 H297 A19 19 0 0 1 297 118 A21 21 0 0 1 297 160 H265 Z M278 91 V113 H294 A11 11 0 0 0 294 91 Z M278 124 V149 H294.5 A12.5 12.5 0 0 0 294.5 124 Z M349 100 A24 31 0 1 1 348.9 100 Z M349 111 A12 20 0 1 0 349.1 111 Z M404 100 A24 31 0 1 1 403.9 100 Z M404 111 A12 20 0 1 0 404.1 111 Z M438 160 V80 H451 V119 L468 102 H485 L462 125 L486 160 H471 L454 134 L451 137 V160 Z"/>
+  </g>
+</svg>

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="title">
+  <title id="title">MyITSBook Symbol on Dark</title>
+  <g id="symbol">
+    <rect x="30" y="192" width="196" height="24" rx="4" fill="#FFFFFF"/>
+    <rect x="44" y="100" width="34" height="78" rx="4" fill="#FFFFFF"/>
+    <circle cx="61" cy="62" r="17" fill="#4ADE80"/>
+    <rect x="94" y="40" width="34" height="138" rx="4" fill="#FFFFFF"/>
+    <path fill="#FFFFFF" d="M180.0 174.1 L147.3 52.5 A4 4 0 0 1 150.2 47.6 L175.2 40.8 A4 4 0 0 1 180.1 43.7 L212.8 165.3 A4 4 0 0 1 209.9 170.2 L184.9 177.0 A4 4 0 0 1 180.0 174.1 Z"/>
+  </g>
+</svg>
