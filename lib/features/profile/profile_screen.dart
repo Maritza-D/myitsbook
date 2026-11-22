@@ -8,6 +8,7 @@ import 'package:myitsbook/data/repository.dart';
 import 'package:myitsbook/features/history/sales_history_screen.dart';
 import 'package:myitsbook/features/profile/my_books_screen.dart';
 import 'package:myitsbook/features/profile/wishlist_screen.dart';
+import 'package:myitsbook/features/help/help_center_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
@@ -730,6 +731,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           color: semantic.textMuted,
                         ),
                         onTap: _showThemeSheet,
+                      ),
+                      Divider(
+                        height: 1,
+                        indent: 70,
+                        color: semantic.border,
+                      ),
+                      ListTile(
+                        leading: _ProfileIconBox(
+                          icon: Icons.help_outline_rounded,
+                          semantic: semantic,
+                        ),
+                        title: Text(
+                          'Pusat Bantuan',
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        subtitle: Text(
+                          'Panduan penggunaan dan FAQ MyITSBook',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        trailing: Icon(
+                          Icons.chevron_right_rounded,
+                          color: semantic.textMuted,
+                        ),
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const HelpCenterScreen(),
+                          ),
+                        ),
                       ),
                     ],
                   ),
