@@ -83,11 +83,7 @@ class UserProfile {
     );
   }
 
-  UserProfile copyWith({
-    String? nama,
-    String? jurusan,
-    String? telepon,
-  }) {
+  UserProfile copyWith({String? nama, String? jurusan, String? telepon}) {
     return UserProfile(
       id: id,
       nama: nama ?? this.nama,
@@ -172,7 +168,9 @@ class BookItem {
       kategori: (map['kategori'] ?? 'Buku Kuliah') as String,
       kondisi: (map['kondisi'] ?? 'Baik') as String,
       deskripsi: (map['deskripsi'] ?? '') as String,
-      jenisListing: ListingType.fromDb((map['jenis_listing'] ?? 'jual') as String),
+      jenisListing: ListingType.fromDb(
+        (map['jenis_listing'] ?? 'jual') as String,
+      ),
       harga: ((map['harga'] ?? 0) as num).toInt(),
       fotoUrl: (map['foto_url'] ?? '') as String,
       status: BookStatus.fromDb((map['status'] ?? 'tersedia') as String),
@@ -312,6 +310,41 @@ class AppNotification {
       isi: (map['isi'] ?? '') as String,
       refId: map['ref_id'] as String?,
       isRead: (map['is_read'] ?? false) as bool,
+      createdAt:
+          DateTime.tryParse((map['created_at'] ?? '').toString()) ??
+          DateTime.now(),
+    );
+  }
+}
+
+// Model rating dan ulasan penjual
+class SellerReview {
+  const SellerReview({
+    required this.id,
+    required this.reviewerId,
+    required this.sellerId,
+    this.bookId,
+    required this.rating,
+    this.ulasan,
+    required this.createdAt,
+  });
+
+  final String id;
+  final String reviewerId;
+  final String sellerId;
+  final String? bookId;
+  final int rating;
+  final String? ulasan;
+  final DateTime createdAt;
+
+  factory SellerReview.fromMap(Map<String, dynamic> map) {
+    return SellerReview(
+      id: map['id'] as String,
+      reviewerId: map['reviewer_id'] as String,
+      sellerId: map['seller_id'] as String,
+      bookId: map['book_id'] as String?,
+      rating: (map['rating'] as num).toInt(),
+      ulasan: map['ulasan'] as String?,
       createdAt:
           DateTime.tryParse((map['created_at'] ?? '').toString()) ??
           DateTime.now(),

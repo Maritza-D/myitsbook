@@ -65,10 +65,7 @@ abstract class AppRepository {
   UserProfile? get currentProfile;
 
   Future<UserProfile?> restoreSession();
-  Future<UserProfile> signIn({
-    required String email,
-    required String password,
-  });
+  Future<UserProfile> signIn({required String email, required String password});
   Future<UserProfile?> registerStudent({
     required String nama,
     required String nrp,
@@ -94,6 +91,14 @@ abstract class AppRepository {
   Future<List<BookItem>> fetchMyBooks();
   Future<BookItem?> fetchBookById(String bookId);
   Future<SellerInfo?> fetchSellerInfo(String sellerId);
+  Future<List<SellerReview>> fetchSellerReviews(String sellerId);
+
+  Future<SellerReview> submitSellerReview({
+    required String conversationId,
+    required int rating,
+    String? ulasan,
+  });
+
   Future<BookItem> createBook(BookPayload payload);
   Future<BookItem> updateBook(String bookId, BookPayload payload);
   Future<void> updateBookStatus(String bookId, BookStatus status);
@@ -250,10 +255,7 @@ class SupabaseRepository implements AppRepository {
 
   @override
   Future<void> resendSignupVerification(String email) async {
-    await _client.auth.resend(
-      type: OtpType.signup,
-      email: email.trim(),
-    );
+    await _client.auth.resend(type: OtpType.signup, email: email.trim());
   }
 
   @override
@@ -363,6 +365,39 @@ class SupabaseRepository implements AppRepository {
     return data == null ? null : SellerInfo.fromMap(data);
   }
 
+  @override
+  Future<List<SellerReview>> fetchSellerReviews(String sellerId) async {
+    final rows = await _client
+        .from('reviews')
+        .select()
+        .eq('seller_id', sellerId)
+        .order('created_at', ascending: false);
+
+    return rows.map(SellerReview.fromMap).toList();
+  }
+
+  @override
+  Future<SellerReview> submitSellerReview({
+    required String conversationId,
+    required int rating,
+    String? ulasan,
+  }) async {
+    if (rating < 1 || rating > 5) {
+      throw Exception('Rating harus antara 1 sampai 5.');
+    }
+
+    final result = await _client.rpc(
+      'submit_seller_review',
+      params: {
+        'p_conversation_id': conversationId,
+        'p_rating': rating,
+        'p_ulasan': ulasan?.trim(),
+      },
+    );
+
+    return SellerReview.fromMap(Map<String, dynamic>.from(result as Map));
+  }
+
   Future<String> _uploadCoverIfProvided(BookPayload payload) async {
     if (payload.coverBytes == null) {
       final existing = payload.existingFotoUrl;
@@ -375,11 +410,13 @@ class SupabaseRepository implements AppRepository {
     final mime = isPng ? 'image/png' : 'image/jpeg';
     final path = '$_uid/${DateTime.now().millisecondsSinceEpoch}.$ext';
 
-    await _client.storage.from('book-covers').uploadBinary(
-      path,
-      payload.coverBytes!,
-      fileOptions: FileOptions(contentType: mime, upsert: true),
-    );
+    await _client.storage
+        .from('book-covers')
+        .uploadBinary(
+          path,
+          payload.coverBytes!,
+          fileOptions: FileOptions(contentType: mime, upsert: true),
+        );
     return _client.storage.from('book-covers').getPublicUrl(path);
   }
 
@@ -395,7 +432,9 @@ class SupabaseRepository implements AppRepository {
           'kondisi': payload.kondisi,
           'deskripsi': payload.deskripsi.trim(),
           'jenis_listing': payload.jenisListing.dbValue,
-          'harga': payload.jenisListing == ListingType.donasi ? 0 : payload.harga,
+          'harga': payload.jenisListing == ListingType.donasi
+              ? 0
+              : payload.harga,
           'foto_url': fotoUrl,
           'nama_penjual': payload.namaPenjual.trim(),
           'kontak_wa': payload.kontakWa.trim(),
@@ -417,7 +456,9 @@ class SupabaseRepository implements AppRepository {
           'kondisi': payload.kondisi,
           'deskripsi': payload.deskripsi.trim(),
           'jenis_listing': payload.jenisListing.dbValue,
-          'harga': payload.jenisListing == ListingType.donasi ? 0 : payload.harga,
+          'harga': payload.jenisListing == ListingType.donasi
+              ? 0
+              : payload.harga,
           'foto_url': fotoUrl,
           'nama_penjual': payload.namaPenjual.trim(),
           'kontak_wa': payload.kontakWa.trim(),
@@ -482,7 +523,10 @@ class SupabaseRepository implements AppRepository {
       await _client.from('wishlists').delete().eq('id', existing['id']);
       return false;
     }
-    await _client.from('wishlists').insert({'user_id': _uid, 'book_id': bookId});
+    await _client.from('wishlists').insert({
+      'user_id': _uid,
+      'book_id': bookId,
+    });
     return true;
   }
 
@@ -512,7 +556,8 @@ class SupabaseRepository implements AppRepository {
         .select('id, nama')
         .inFilter('id', otherIds);
     final nameMap = {
-      for (final p in profileRows) p['id'] as String: (p['nama'] ?? 'Mahasiswa') as String,
+      for (final p in profileRows)
+        p['id'] as String: (p['nama'] ?? 'Mahasiswa') as String,
     };
 
     final unreadRows = await _client
@@ -541,8 +586,12 @@ class SupabaseRepository implements AppRepository {
         bookTitle: (book?['judul'] ?? 'Buku ITS') as String,
         bookFotoUrl: (book?['foto_url'] ?? '') as String,
         bookHarga: ((book?['harga'] ?? 0) as num).toInt(),
-        bookJenis: ListingType.fromDb((book?['jenis_listing'] ?? 'jual') as String),
-        bookStatus: BookStatus.fromDb((book?['status'] ?? 'tersedia') as String),
+        bookJenis: ListingType.fromDb(
+          (book?['jenis_listing'] ?? 'jual') as String,
+        ),
+        bookStatus: BookStatus.fromDb(
+          (book?['status'] ?? 'tersedia') as String,
+        ),
         otherUserName: nameMap[otherId] ?? 'Mahasiswa ITS',
         lastMessage: (r['last_message'] ?? '') as String,
         lastMessageSenderId: r['last_message_sender_id'] as String?,
@@ -697,6 +746,7 @@ class DemoRepository implements AppRepository {
   final List<_DemoConv> _convs = [];
   final List<ChatMessage> _messages = [];
   final List<AppNotification> _notifications = [];
+  final List<SellerReview> _reviews = [];
   int _seq = 100;
 
   static const UserProfile defaultStudent = UserProfile(
@@ -800,7 +850,8 @@ class DemoRepository implements AppRepository {
         judul: 'Algoritma & Pemrograman Dart Flutter',
         kategori: 'Buku Kuliah',
         kondisi: 'Seperti Baru',
-        deskripsi: 'Modul praktikum pemrograman bergerak bersih dan siap pakai.',
+        deskripsi:
+            'Modul praktikum pemrograman bergerak bersih dan siap pakai.',
         jenisListing: ListingType.jual,
         harga: 55000,
         fotoUrl: '',
@@ -1032,6 +1083,82 @@ class DemoRepository implements AppRepository {
   }
 
   @override
+  Future<List<SellerReview>> fetchSellerReviews(String sellerId) async {
+    return _reviews.where((review) => review.sellerId == sellerId).toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  }
+
+  @override
+  Future<SellerReview> submitSellerReview({
+    required String conversationId,
+    required int rating,
+    String? ulasan,
+  }) async {
+    if (rating < 1 || rating > 5) {
+      throw Exception('Rating harus antara 1 sampai 5.');
+    }
+
+    final uid = _current?.id;
+    if (uid == null) {
+      throw Exception('Silakan login terlebih dahulu.');
+    }
+
+    final matches = _convs.where((c) => c.id == conversationId);
+    if (matches.isEmpty) {
+      throw Exception('Percakapan tidak ditemukan.');
+    }
+
+    final conv = matches.first;
+
+    if (conv.buyerId != uid) {
+      throw Exception('Hanya pembeli yang dapat memberikan ulasan.');
+    }
+
+    final books = _books.where((b) => b.id == conv.bookId);
+    if (books.isEmpty || books.first.status != BookStatus.selesai) {
+      throw Exception('Buku belum berstatus selesai.');
+    }
+
+    if (_reviews.any((r) => r.reviewerId == uid && r.bookId == conv.bookId)) {
+      throw Exception('Kamu sudah memberikan ulasan untuk buku ini.');
+    }
+
+    final review = SellerReview(
+      id: 'review-${++_seq}',
+      reviewerId: uid,
+      sellerId: conv.sellerId,
+      bookId: conv.bookId,
+      rating: rating,
+      ulasan: ulasan?.trim().isEmpty ?? true ? null : ulasan!.trim(),
+      createdAt: DateTime.now(),
+    );
+
+    _reviews.add(review);
+
+    final sellerReviews = _reviews
+        .where((r) => r.sellerId == conv.sellerId)
+        .toList();
+
+    final average =
+        sellerReviews.fold<int>(0, (total, r) => total + r.rating) /
+        sellerReviews.length;
+
+    final seller = _sellers[conv.sellerId];
+    if (seller != null) {
+      _sellers[conv.sellerId] = SellerInfo(
+        id: seller.id,
+        nama: seller.nama,
+        jurusan: seller.jurusan,
+        statusVerifikasi: seller.statusVerifikasi,
+        ratingRata2: double.parse(average.toStringAsFixed(1)),
+      );
+    }
+
+    _emit();
+    return review;
+  }
+
+  @override
   Future<BookItem> createBook(BookPayload payload) async {
     final uid = _current?.id ?? 'demo-user';
     final item = BookItem(
@@ -1120,9 +1247,8 @@ class DemoRepository implements AppRepository {
         (b) => b.id == c.bookId,
         orElse: () => _books.first,
       );
-      final convMsgs =
-          _messages.where((m) => m.conversationId == c.id).toList()
-            ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      final convMsgs = _messages.where((m) => m.conversationId == c.id).toList()
+        ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
       final last = convMsgs.isEmpty ? null : convMsgs.last;
       final unread = convMsgs
           .where((m) => m.senderId != uid && !m.isRead)
@@ -1191,9 +1317,7 @@ class DemoRepository implements AppRepository {
   @override
   Stream<List<ChatMessage>> watchMessages(String conversationId) {
     return _reactiveStream(() {
-      return _messages
-          .where((m) => m.conversationId == conversationId)
-          .toList()
+      return _messages.where((m) => m.conversationId == conversationId).toList()
         ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
     });
   }
