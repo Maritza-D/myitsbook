@@ -12,6 +12,7 @@ import 'package:myitsbook/data/models.dart';
 import 'package:myitsbook/data/repository.dart';
 import 'package:myitsbook/features/books/book_form_screen.dart';
 import 'package:myitsbook/features/chat/chat_room_screen.dart';
+import 'package:myitsbook/features/transaction/buy_book_sheet.dart';
 
 class BookDetailScreen extends StatefulWidget {
   const BookDetailScreen({
@@ -111,9 +112,46 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(mapAppError(e))),
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(mapAppError(e))));
+    } finally {
+      if (mounted) setState(() => _openingChat = false);
+    }
+  }
+
+  /// Alur pembelian: pembeli mengisi usulan lokasi/catatan, lalu pengajuan
+  /// dikirim otomatis ke penjual sebagai pesan chat.
+  Future<void> _buyBook() async {
+    final book = _book;
+    if (book == null || !book.isAvailable) return;
+    final request = await showBuyBookSheet(context: context, book: book);
+    if (request == null || !mounted) return;
+    HapticFeedback.selectionClick();
+    setState(() => _openingChat = true);
+    try {
+      final conv = await widget.repository.getOrCreateConversation(book);
+      await widget.repository.sendMessage(
+        conv.id,
+        buildPurchaseRequestMessage(book, request),
       );
+      if (!mounted) return;
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute(
+          builder: (_) => ChatRoomScreen(
+            repository: widget.repository,
+            profile: widget.profile,
+            conversation: conv,
+            onBookStatusUpdated: () {
+              widget.onBookChanged();
+              _load();
+            },
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(mapAppError(e))));
     } finally {
       if (mounted) setState(() => _openingChat = false);
     }
@@ -140,9 +178,8 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(mapAppError(e))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(mapAppError(e))));
     }
   }
 
@@ -164,9 +201,8 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
               const SizedBox(height: 6),
               Text(
                 'Hubungi melalui WhatsApp atau mulai percakapan langsung melalui fitur Pesan MyITSBook.',
-                style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
-                  color: semantic.textMuted,
-                ),
+                style: Theme.of(ctx).textTheme.bodyMedium
+                    ?.copyWith(color: semantic.textMuted),
               ),
               const SizedBox(height: 16),
               Container(
@@ -733,13 +769,25 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
           label: Text(_saved ? 'Tersimpan' : 'Wishlist'),
         ),
         const SizedBox(width: 12),
+        OutlinedButton(
+          onPressed: _openingChat ? null : () => _openChat(),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size(48, 48),
+            padding: EdgeInsets.zero,
+          ),
+          child: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+        ),
+        const SizedBox(width: 12),
         Expanded(
           child: FilledButton.icon(
-            onPressed: _openingChat ? null : () => _openChat(),
-            icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
-            label: Text(
-              book.isDonation ? 'Hubungi Donatur' : 'Hubungi Penjual',
+            onPressed: _openingChat ? null : _buyBook,
+            icon: Icon(
+              book.isDonation
+                  ? Icons.volunteer_activism_outlined
+                  : Icons.shopping_bag_outlined,
+              size: 18,
             ),
+            label: Text(book.isDonation ? 'Ambil Donasi' : 'Beli Buku'),
           ),
         ),
       ],
@@ -897,10 +945,8 @@ class _ConditionMeterCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             _guide,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: semantic.textMuted,
-              height: 1.4,
-            ),
+            style: Theme.of(context).textTheme.labelSmall
+                ?.copyWith(color: semantic.textMuted, height: 1.4),
           ),
         ],
       ),

@@ -26,6 +26,7 @@ class ConversationsScreen extends StatefulWidget {
 class _ConversationsScreenState extends State<ConversationsScreen> {
   final _searchCtrl = TextEditingController();
   bool _unreadOnly = false;
+  _ChatRole _role = _ChatRole.semua;
   bool _showSearch = false;
 
   @override
@@ -46,11 +47,18 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
           stream: widget.repository.watchConversations(),
           builder: (context, snapshot) {
             final all = snapshot.data ?? [];
-            final unreadConvCount =
-                all.where((c) => c.unreadCount > 0).length;
+            final unreadConvCount = all.where((c) => c.unreadCount > 0).length;
             final q = _searchCtrl.text.trim().toLowerCase();
             final filtered = all.where((c) {
               if (_unreadOnly && c.unreadCount == 0) return false;
+              if (_role == _ChatRole.membeli &&
+                  c.buyerId != widget.profile.id) {
+                return false;
+              }
+              if (_role == _ChatRole.menjual &&
+                  c.sellerId != widget.profile.id) {
+                return false;
+              }
               if (q.isNotEmpty) {
                 final matchName = c.otherUserName.toLowerCase().contains(q);
                 final matchBook = c.bookTitle.toLowerCase().contains(q);
@@ -131,12 +139,28 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        children: [
+                          for (final r in _ChatRole.values)
+                            ChoiceChip(
+                              label: Text(
+                                r.label,
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              selected: _role == r,
+                              onSelected: (_) => setState(() => _role = r),
+                            ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
                 Divider(height: 1, color: semantic.border),
                 Expanded(
-                  child: snapshot.connectionState == ConnectionState.waiting &&
+                  child:
+                      snapshot.connectionState == ConnectionState.waiting &&
                           !snapshot.hasData
                       ? const Center(child: CircularProgressIndicator())
                       : snapshot.hasError
@@ -150,8 +174,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                           title: _unreadOnly
                               ? 'Tidak ada pesan belum dibaca'
                               : 'Belum ada percakapan',
-                          subtitle:
-                              'Buka halaman detail buku untuk mulai menghubungi penjual atau donatur.',
+                          subtitle: 'Buka halaman detail buku untuk mulai menghubungi penjual atau donatur.',
                         )
                       : ListView.separated(
                           padding: const EdgeInsets.symmetric(vertical: 6),
@@ -189,8 +212,9 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                                           width: 54,
                                           height: 54,
                                           child: ClipRRect(
-                                            borderRadius:
-                                                BorderRadius.circular(16),
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
                                             child: BookCoverImage(
                                               fotoUrl: conv.bookFotoUrl,
                                               title: conv.bookTitle,
@@ -256,7 +280,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                                           ),
                                           const SizedBox(height: 2),
                                           Text(
-                                            conv.bookTitle,
+                                            '${conv.sellerId == widget.profile.id ? 'Menjual' : 'Membeli'} · ${conv.bookTitle}',
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: TextStyle(
@@ -337,6 +361,15 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
       ),
     );
   }
+}
+
+enum _ChatRole {
+  semua('Semua'),
+  membeli('Sebagai Pembeli'),
+  menjual('Sebagai Penjual');
+
+  const _ChatRole(this.label);
+  final String label;
 }
 
 class _UnderlineCountTab extends StatelessWidget {

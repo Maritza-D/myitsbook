@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:myitsbook/core/theme/app_theme.dart';
+import 'package:myitsbook/core/utils/date_labels.dart';
 import 'package:myitsbook/core/utils/error_mapper.dart';
 import 'package:myitsbook/core/utils/formatters.dart';
 import 'package:myitsbook/core/widgets/app_bottom_sheet.dart';
@@ -72,9 +73,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     } catch (e) {
       if (!mounted) return;
       _msgCtrl.text = text;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(mapAppError(e))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(mapAppError(e))));
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -152,9 +152,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(mapAppError(e))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(mapAppError(e))));
     }
   }
 
@@ -239,9 +238,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                       const SizedBox(width: 5),
                       Text(
                         _isSeller ? 'Pembeli · ITS' : 'Penjual · ITS',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: semantic.textMuted,
-                        ),
+                        style: Theme.of(context).textTheme.labelSmall
+                            ?.copyWith(color: semantic.textMuted),
                       ),
                     ],
                   ),
@@ -323,7 +321,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                         Row(
                           children: [
                             Text(
-                              isDonasi ? 'Gratis' : formatRupiah(conv.bookHarga),
+                              isDonasi
+                                  ? 'Gratis'
+                                  : formatRupiah(conv.bookHarga),
                               style: TextStyle(
                                 fontFamily: AppTheme.displayFont,
                                 fontSize: 13.5,
@@ -381,9 +381,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                       child: Text(
                         'Kirim pesan untuk menanyakan kondisi buku atau menyepakati lokasi serah terima di kampus ITS.',
                         textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: semantic.textMuted,
-                        ),
+                        style: Theme.of(context).textTheme.bodyMedium
+                            ?.copyWith(color: semantic.textMuted),
                       ),
                     ),
                   );
@@ -407,7 +406,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: Text(
-                            'Hari ini',
+                            formatDayLabel(messages.first.createdAt),
                             style: Theme.of(context).textTheme.labelSmall
                                 ?.copyWith(
                                   color: semantic.textMuted,
@@ -419,7 +418,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                     }
                     final msg = messages[idx - 1];
                     final isMine = msg.senderId == widget.profile.id;
-                    return Align(
+                    final showDayChip =
+                        idx >= 2 &&
+                        !isSameDay(messages[idx - 2].createdAt, msg.createdAt);
+                    final bubble = Align(
                       alignment: isMine
                           ? Alignment.centerRight
                           : Alignment.centerLeft,
@@ -500,6 +502,31 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                           ],
                         ),
                       ),
+                    );
+                    if (!showDayChip) return bubble;
+                    return Column(
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.only(top: 4, bottom: 14),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: semantic.subtleSurface,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Text(
+                            formatDayLabel(msg.createdAt),
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: semantic.textMuted,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                          ),
+                        ),
+                        bubble,
+                      ],
                     );
                   },
                 );
