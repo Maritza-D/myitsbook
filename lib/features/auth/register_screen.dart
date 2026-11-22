@@ -65,7 +65,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
 
       setState(() => _loading = false);
-      final verified = await _showEmailVerificationSheet(email);
+      final verified = await _showEmailVerificationSheet(
+        email: email,
+        password: _passCtrl.text,
+      );
       if (!mounted || verified == null) return;
       Navigator.of(context).popUntil((route) => route.isFirst);
       widget.onRegistered(verified);
@@ -79,16 +82,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  Future<UserProfile?> _showEmailVerificationSheet(String email) {
+  Future<UserProfile?> _showEmailVerificationSheet({
+    required String email,
+    required String password,
+  }) {
     return showAppBottomSheet<UserProfile>(
       context: context,
       builder: (ctx) => _EmailVerificationSheet(
         email: email,
+        password: password,
         repository: widget.repository,
-        onBackToLogin: () {
-          Navigator.of(ctx).pop();
-          Navigator.of(context).popUntil((route) => route.isFirst);
-        },
       ),
     );
   }
@@ -327,13 +330,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 class _EmailVerificationSheet extends StatefulWidget {
   const _EmailVerificationSheet({
     required this.email,
+    required this.password,
     required this.repository,
-    required this.onBackToLogin,
   });
 
   final String email;
+  final String password;
   final AppRepository repository;
-  final VoidCallback onBackToLogin;
 
   @override
   State<_EmailVerificationSheet> createState() =>
@@ -343,6 +346,7 @@ class _EmailVerificationSheet extends StatefulWidget {
 class _EmailVerificationSheetState extends State<_EmailVerificationSheet> {
   final _otpCtrl = TextEditingController();
   bool _verifying = false;
+  bool _checkingLink = false;
   bool _resending = false;
   String? _errorText;
   String? _infoText;
@@ -379,6 +383,27 @@ class _EmailVerificationSheetState extends State<_EmailVerificationSheet> {
       setState(() => _errorText = mapAppError(e));
     } finally {
       if (mounted) setState(() => _verifying = false);
+    }
+  }
+
+  Future<void> _signInAfterLinkClicked() async {
+    setState(() {
+      _checkingLink = true;
+      _errorText = null;
+      _infoText = null;
+    });
+    try {
+      final profile = await widget.repository.signIn(
+        email: widget.email,
+        password: widget.password,
+      );
+      if (!mounted) return;
+      Navigator.of(context).pop(profile);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _errorText = mapAppError(e));
+    } finally {
+      if (mounted) setState(() => _checkingLink = false);
     }
   }
 
@@ -500,7 +525,7 @@ class _EmailVerificationSheetState extends State<_EmailVerificationSheet> {
           ],
           const SizedBox(height: 16),
           FilledButton(
-            onPressed: _verifying ? null : _verify,
+            onPressed: (_verifying || _checkingLink) ? null : _verify,
             child: _verifying
                 ? SizedBox(
                     width: 20,
@@ -510,25 +535,28 @@ class _EmailVerificationSheetState extends State<_EmailVerificationSheet> {
                       color: scheme.onPrimary,
                     ),
                   )
-                : const Text('Verifikasi & Masuk'),
+                : const Text('Verifikasi Kode & Masuk'),
           ),
           const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: (_verifying || _resending) ? null : _resend,
-                  child: Text(_resending ? 'Mengirim...' : 'Kirim Ulang'),
-                ),
+          OutlinedButton.icon(
+            onPressed:
+                (_verifying || _checkingLink) ? null : _signInAfterLinkClicked,
+            icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
+            label: Text(
+              _checkingLink
+                  ? 'Memeriksa Status Verifikasi...'
+                  : 'Sudah Klik Tautan di Gmail? Masuk Sekarang',
+            ),
+          ),
+          const SizedBox(height: 6),
+          Center(
+            child: TextButton(
+              onPressed:
+                  (_verifying || _checkingLink || _resending) ? null : _resend,
+              child: Text(
+                _resending ? 'Mengirim ulang...' : 'Kirim Ulang Email Verifikasi',
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: TextButton(
-                  onPressed: _verifying ? null : widget.onBackToLogin,
-                  child: const Text('Ke Halaman Masuk'),
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),

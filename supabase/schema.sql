@@ -128,8 +128,10 @@ set search_path = public
 as $$
   select not exists (
     select 1
-    from public.profiles
-    where nrp = btrim(p_nrp)
+    from public.profiles p
+    join auth.users u on u.id = p.id
+    where p.nrp = btrim(p_nrp)
+      and u.email_confirmed_at is not null
   );
 $$;
 
@@ -208,6 +210,14 @@ begin
   v_nrp := coalesce(nullif(btrim(new.raw_user_meta_data ->> 'nrp'), ''), replace(new.id::text, '-', ''));
   v_jurusan := coalesce(nullif(btrim(new.raw_user_meta_data ->> 'jurusan'), ''), 'Sistem Informasi');
   v_telepon := coalesce(nullif(btrim(new.raw_user_meta_data ->> 'telepon'), ''), '0800000000');
+
+  update public.profiles p
+  set nrp = 'pending-' || replace(p.id::text, '-', '')
+  from auth.users u
+  where p.id = u.id
+    and p.nrp = v_nrp
+    and p.id <> new.id
+    and u.email_confirmed_at is null;
 
   insert into public.profiles (id, nama, nrp, jurusan, telepon, email, role)
   values (new.id, v_nama, v_nrp, v_jurusan, v_telepon, coalesce(new.email, ''), 'mahasiswa')

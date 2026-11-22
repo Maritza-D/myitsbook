@@ -58,7 +58,7 @@ void main() {
     expect(find.text('nadia.putri@gmail.com'), findsWidgets);
 
     await tester.enterText(find.byType(TextField).last, '123456');
-    await tester.tap(find.text('Verifikasi & Masuk'));
+    await tester.tap(find.text('Verifikasi Kode & Masuk'));
     await tester.pumpAndSettle();
 
     expect(find.text('Selamat datang, Nadia'), findsOneWidget);

@@ -76,10 +76,22 @@ String? validateRequired(String? value, String label) {
 String? validateEmail(String? value) {
   final requiredErr = validateRequired(value, 'Email');
   if (requiredErr != null) return requiredErr;
-  final trimmed = value!.trim();
+  final trimmed = value!.trim().toLowerCase();
   final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
   if (!emailRegex.hasMatch(trimmed)) {
     return 'Format email tidak valid';
+  }
+  const gmailTypos = {
+    'gmai.com',
+    'gmial.com',
+    'gamil.com',
+    'gmail.co',
+    'gmail.con',
+    'gmal.com',
+  };
+  final domain = trimmed.split('@').last;
+  if (gmailTypos.contains(domain)) {
+    return 'Domain email salah ketik (maksud Anda @gmail.com?)';
   }
   return null;
 }
