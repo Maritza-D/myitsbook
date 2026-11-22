@@ -157,6 +157,160 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     }
   }
 
+  Future<void> _showReviewDialog() async {
+    if (_isSeller) return;
+
+    if (_bookStatus != BookStatus.terjual &&
+        _bookStatus != BookStatus.selesai) {
+      return;
+    }
+
+    try {
+      final reviews = await widget.repository.fetchSellerReviews(
+        widget.conversation.sellerId,
+      );
+
+      if (!mounted) return;
+
+      final alreadyReviewed = reviews.any(
+        (review) =>
+            review.reviewerId == widget.profile.id &&
+            review.bookId == widget.conversation.bookId,
+      );
+
+      if (alreadyReviewed) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Kamu sudah memberikan ulasan untuk buku ini.'),
+          ),
+        );
+        return;
+      }
+
+      var selectedRating = 5;
+      var submitting = false;
+      final ulasanController = TextEditingController();
+
+      try {
+        await showDialog<void>(
+          context: context,
+          builder: (dialogContext) {
+            return StatefulBuilder(
+              builder: (context, setDialogState) {
+                return AlertDialog(
+                  title: const Text('Beri Rating Penjual'),
+                  content: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Bagaimana pengalamanmu bertransaksi dengan penjual?',
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(5, (index) {
+                            final star = index + 1;
+                            return IconButton(
+                              onPressed: submitting
+                                  ? null
+                                  : () {
+                                      setDialogState(() {
+                                        selectedRating = star;
+                                      });
+                                    },
+                              icon: Icon(
+                                star <= selectedRating
+                                    ? Icons.star_rounded
+                                    : Icons.star_border_rounded,
+                                color: Colors.amber,
+                                size: 32,
+                              ),
+                            );
+                          }),
+                        ),
+                        Text('$selectedRating dari 5 bintang'),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: ulasanController,
+                          enabled: !submitting,
+                          maxLines: 3,
+                          maxLength: 300,
+                          decoration: const InputDecoration(
+                            hintText: 'Tulis ulasanmu (opsional)',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: submitting
+                          ? null
+                          : () => Navigator.of(dialogContext).pop(),
+                      child: const Text('Nanti'),
+                    ),
+                    FilledButton(
+                      onPressed: submitting
+                          ? null
+                          : () async {
+                              setDialogState(() => submitting = true);
+
+                              try {
+                                await widget.repository.submitSellerReview(
+                                  conversationId: widget.conversation.id,
+                                  rating: selectedRating,
+                                  ulasan: ulasanController.text,
+                                );
+
+                                if (!mounted || !dialogContext.mounted) return;
+
+                                Navigator.of(dialogContext).pop();
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Terima kasih! Rating dan ulasan berhasil dikirim.',
+                                    ),
+                                  ),
+                                );
+                              } catch (e) {
+                                if (!mounted || !dialogContext.mounted) return;
+
+                                setDialogState(() => submitting = false);
+
+                                ScaffoldMessenger.of(this.context).showSnackBar(
+                                  SnackBar(content: Text(mapAppError(e))),
+                                );
+                              }
+                            },
+                      child: submitting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Kirim'),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      } finally {
+        ulasanController.dispose();
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(mapAppError(e))));
+    }
+  }
+
   String _formatClock(DateTime dt) {
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
@@ -359,6 +513,22 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               ),
             ),
           ),
+
+          if (!_isSeller &&
+              (_bookStatus == BookStatus.terjual ||
+                  _bookStatus == BookStatus.selesai))
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _showReviewDialog,
+                  icon: const Icon(Icons.star_rounded),
+                  label: const Text('Beri Rating Penjual'),
+                ),
+              ),
+            ),
+
           Expanded(
             child: StreamBuilder<List<ChatMessage>>(
               stream: widget.repository.watchMessages(conv.id),

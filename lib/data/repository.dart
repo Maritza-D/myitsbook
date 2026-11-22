@@ -1115,8 +1115,11 @@ class DemoRepository implements AppRepository {
     }
 
     final books = _books.where((b) => b.id == conv.bookId);
-    if (books.isEmpty || books.first.status != BookStatus.selesai) {
-      throw Exception('Buku belum berstatus selesai.');
+
+    if (books.isEmpty ||
+        (books.first.status != BookStatus.selesai &&
+            books.first.status != BookStatus.terjual)) {
+      throw Exception('Buku belum selesai terjual.');
     }
 
     if (_reviews.any((r) => r.reviewerId == uid && r.bookId == conv.bookId)) {
